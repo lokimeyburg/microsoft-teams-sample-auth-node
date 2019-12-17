@@ -39,6 +39,7 @@
         <!-- Login button -->
         <button onclick="loginV1()">Login to Azure AD</button>
         <button onclick="loginV2()">Login to Azure AD (V2 endpoint)</button>
+        <button id="promptForConsentButton" onclick="loginV2()" disabled>Grant Permission</button>
 
         <!-- Result -->
         <p>
@@ -52,12 +53,103 @@
             </div>
         </p>
 
+        <!-- Logs -->
+        <div id="logs"></div>
+
         <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha384-VC7EHu0lDzZyFfmjTPJq+DFyIn8TUGAJbEtpXquazFVr00Q/OOx//RjiZ9yU9+9m" crossorigin="anonymous"></script>
         <script src="https://unpkg.com/@microsoft/teams-js@1.4.2/dist/MicrosoftTeams.min.js" integrity="sha384-DcoNUuQTjpW5Sw3msonn/2ojgtNvtC5fCGd5U9RUpL3g1hla1LzHz8I9YIYSXe6q" crossorigin="anonymous"></script>
         <script src="https://secure.aadcdn.microsoftonline-p.com/lib/1.0.17/js/adal.min.js" integrity="sha384-BIOS/65fbAsb2XiCCSTlZSTTl0ZgqkOU522dpyk5meOnN2EOQ3uH+QpqEtoAtmBn" crossorigin="anonymous"></script>        
 
         <script type="text/javascript">
             microsoftTeams.initialize();
+
+            // 1. Get auth token
+            // Ask Teams to get us a token from AAD, we should then exchange it server-side
+            function getAuthToken(){
+                // Get auth token
+                var authTokenRequest = {
+                    successCallback: (result) =>  {
+                        sendTokenToBackend(result);
+                    },
+                    failureCallback: function(error) { 
+                        printLog("Error getting token: " + error);
+                    },
+                };
+
+                microsoftTeams.authentication.getAuthToken(authTokenRequest);
+            }
+
+            // 2. Send token to the backend
+            // After we call getAuthToken, we need to send the token from that request to the backend to 
+            // verify that we have the correct permissions (or do an on-behalf-of exchange to get a new token) 
+            function sendTokenToBackend(result){
+                printLog("Token received: " + result)
+                printLog("Sending token to backend for AAD on-behalf-of exchange")
+
+                // Get Tenant ID
+                var getContextPromise = new Promise((resolve, reject) => {
+                    microsoftTeams.getContext(function(context){
+                        resolve(context);
+                    });
+                });
+
+                // Send Tenant ID and token to backend
+                getContextPromise.then(function(context) {
+                    // POST result to backend
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", "/auth/token", true);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    // Set response handler before sending
+                    xhr.onreadystatechange = function () {
+                        if (this.readyState != 4) return;
+                        if (this.status == 200) {
+                            var data = JSON.parse(this.responseText);
+                            handleServerResponse(data);
+                        }
+                    };
+                    // send POST request
+                    xhr.send(JSON.stringify({ "tid": context.tid, "token": result })); 
+                });
+            }
+
+
+            // 3. Ask for additional consent from the user
+            // If the on-behalf-of-flow failed due to requiring further consent, then we need to have the
+            // user click a button to show the AAD consent dialog and ask for additional permission
+            function initializeConsentButton(){
+                var btn = document.getElementById("promptForConsentButton")
+            }
+
+            // ------------------------------------------------------------------------
+
+            function printLog(msg) {
+                var logDiv = document.getElementById('logs');
+                var p = document.createElement("p");
+                logDiv.prepend(msg, p);
+                console.log("Auth: " + msg);
+            }
+
+            function handleServerResponse(data) {
+                printLog("Backend returned: " + JSON.stringify(data));
+                var error = data.error;
+                // Error: enable the grantPermission button
+                if (error != null) {
+                    printLog("Enabling the 'Grant Permission' button");
+                    document.getElementById("promptForConsentButton").disabled = false
+                // Success: server returned a valid acess token
+                } else {
+                    printLog("Success! You have a valid token from your backend with extra permissions.");
+                }
+
+            }
+
+            // Start authentication
+            printLog("Starting...");
+            printLog("Getting auth token...");
+            initializeConsentButton();
+            getAuthToken();
+
+            // ----------------------------------------------------------------------
 
             // Login to Azure AD and get access to Microsoft Graph
             function login(url) {

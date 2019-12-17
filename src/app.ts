@@ -28,6 +28,8 @@ let bodyParser = require("body-parser");
 let favicon = require("serve-favicon");
 let http = require("http");
 let path = require("path");
+let querystring = require("querystring");
+let fetch = require("node-fetch");
 import * as config from "config";
 import * as msteams from "botbuilder-teams";
 import * as apis from "./apis";
@@ -39,7 +41,7 @@ import { logger } from "./utils/index";
 let app = express();
 let appId = config.get("app.appId");
 
-app.set("port", process.env.PORT || 3978);
+app.set("port", process.env.PORT || 3333);
 app.use(express.static(path.join(__dirname, "../../public")));
 app.use(favicon(path.join(__dirname, "../../public/assets", "favicon.ico")));
 app.use(bodyParser.json());
@@ -103,6 +105,52 @@ app.get("/tab/simple-end", (req, res) => { res.render("tab/simple/simple-end"); 
 app.get("/tab/silent", (req, res) => { res.render("tab/silent/silent"); });
 app.get("/tab/silent-start", (req, res) => { res.render("tab/silent/silent-start"); });
 app.get("/tab/silent-end", (req, res) => { res.render("tab/silent/silent-end"); });
+
+// On-behalf-of token exchange
+app.post('/auth/token', function(req, res) {
+    let tid = req.body.tid;
+    let token = req.body.token;
+    let scopes = ["https://graph.microsoft.com/User.Read"];
+    let oboPromise = new Promise((resolve, reject) => {
+        const url = "https://login.microsoftonline.com/" + tid + "/oauth2/v2.0/token";
+        const params = {
+            client_id: "bdb71ee3-1c28-4edb-a758-fd6f8b60348c",
+            client_secret: "]DjvGB0f?R[Z4qSwn24uSfr?EKhGN_tv",
+            grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            assertion: token,
+            requested_token_use: "on_behalf_of",
+            scope: scopes.join(" "),
+        };
+    
+        fetch(url, {
+            method: "POST",
+            body: querystring.stringify(params),
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        }).then(result => {
+            if (result.status !== 200) {
+            result.json().then(json => {
+                // TODO: Check explicitly for invalid_grant or interaction_required
+                reject({"error":json.error});
+            });
+            } else {
+            result.json().then(json => {
+                resolve(json.access_token);
+            });
+            }
+        });
+    });
+
+    oboPromise.then(function(result) {
+        res.json(result);
+    }, function(err) {
+        console.log(err); // Error: "It broke"
+        res.json(err);
+    });
+});
+
 
 let openIdMetadata = new apis.OpenIdMetadata("https://login.microsoftonline.com/common/.well-known/openid-configuration");
 let validateIdToken = new apis.ValidateIdToken(openIdMetadata, appId).listen();     // Middleware to validate id_token

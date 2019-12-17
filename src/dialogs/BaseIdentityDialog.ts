@@ -185,6 +185,9 @@ export abstract class BaseIdentityDialog extends builder.IntentDialog
             // Build the sign-in url
             let signinUrl = config.get("app.baseUri") + `/html/auth-start.html?authorizationUrl=${encodeURIComponent(authUrl)}`;
 
+            // SSO url
+            let ssoUrl = config.get("app.baseUri") + `/tab/simple`;
+
             // The fallbackUrl specifies the page to be opened on mobile, until they support automatically passing the
             // verification code via notifySuccess(). If you want to support only this protocol, then you can give the
             // URL of an error page that directs the user to sign in using the desktop app. The flow demonstrated here
@@ -201,6 +204,10 @@ export abstract class BaseIdentityDialog extends builder.IntentDialog
                             .type("signin")
                             .value(signinUrlWithFallback)
                             .title("Sign in"),
+                        new builder.CardAction(session)
+                            .type("signin")
+                            .value(ssoUrl)
+                            .title("SSO"),
                     ]));
             session.send(msg);
 
