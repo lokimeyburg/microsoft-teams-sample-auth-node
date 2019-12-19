@@ -117,7 +117,25 @@
             // If the on-behalf-of-flow failed due to requiring further consent, then we need to have the
             // user click a button to show the AAD consent dialog and ask for additional permission
             function initializeConsentButton(){
-                var btn = document.getElementById("promptForConsentButton")
+                var btn = document.getElementById("promptForConsentButton");
+                btn.onclick = () => {
+                    microsoftTeams.authentication.authenticate({
+                        url: window.location.origin + "/tab/simple-start-v2",
+                        width: 600,
+                        height: 535,
+                        successCallback: function (result) {
+                            let data = localStorage.getItem(result);
+                            localStorage.removeItem(result);
+                            printLog("Success! Additional permission granted. Result: " + data);
+                            let tokenResult = JSON.parse(data);
+                            sendTokenToBot(tokenResult.accessToken);
+                        },
+                        failureCallback: function (reason) {
+                            printLog("Failure. Additional permission was not granted. Result: " + JSON.stringify(reason))
+                            handleAuthError(reason);
+                        }
+                    });
+                }
             }
 
             // ------------------------------------------------------------------------
@@ -147,6 +165,7 @@
                 let stateParams = {};
                 let redirectURI = "";
 
+                // Use the authorizationURL query-string-parameter to determine where to send the user 
                 let s = location.search.substr(1).split("&")[0].split("=");
                 k = s[0];
                 v = s[1] && decodeURIComponent(s[1]);
@@ -168,7 +187,7 @@
                 } else {
                     return;
                 }
-
+                // include the accessToken that we received from the backend
                 redirectURI = redirectURI + "?accessToken=" + accessToken + "&state=" + JSON.stringify(stateParams);
                 
                 window.location.href = redirectURI;

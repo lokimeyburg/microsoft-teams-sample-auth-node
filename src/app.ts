@@ -115,7 +115,7 @@ app.post("/auth/token", (req, res) => {
         const url = "https://login.microsoftonline.com/" + tid + "/oauth2/v2.0/token";
         const params = {
             client_id: config.get("app.appId"),
-            client_secret: config.get("app.clientSecret"),
+            client_secret: config.get("app.appPassword"),
             grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
             assertion: token,
             requested_token_use: "on_behalf_of",
