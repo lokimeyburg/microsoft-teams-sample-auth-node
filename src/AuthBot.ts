@@ -102,20 +102,22 @@ export class AuthBot extends builder.UniversalBot {
             (utils.getOAuthState(session, providerName) === stateString) &&     // OAuth state matches what we expect
             (authCode || accessToken)) {                                                         // User granted authorization
             try {
-                // Redeem the authorization code for an access token (if we dont have one), 
-                // and store it provisionally. The bot will refuse to use the token until we 
-                // validate that the user in the chat is the same as the user who went through 
-                // the authorization flow, using a verification code that needs to be presented 
+                // Redeem the authorization code for an access token (if we dont have one),
+                // and store it provisionally. The bot will refuse to use the token until we
+                // validate that the user in the chat is the same as the user who went through
+                // the authorization flow, using a verification code that needs to be presented
                 // by the user in the chat.
+                let userToken: UserToken;
+
                 if (accessToken != null) {
-                    var userToken: UserToken = {
+                    userToken = {
                         accessToken: accessToken,
                         expirationTime: 3957,
                         verificationCode: "unnecessary",
-                        verificationCodeValidated: true, //skip validation since we already got the token from AAD 
-                    }
+                        verificationCodeValidated: true, // skip validation since we already got the token from AAD
+                    };
                 } else {
-                    let userToken = await provider.getAccessTokenAsync(authCode);
+                    userToken = await provider.getAccessTokenAsync(authCode);
                     await utils.prepareTokenForVerification(userToken);
                 }
 

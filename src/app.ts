@@ -107,7 +107,7 @@ app.get("/tab/silent-start", (req, res) => { res.render("tab/silent/silent-start
 app.get("/tab/silent-end", (req, res) => { res.render("tab/silent/silent-end"); });
 
 // On-behalf-of token exchange
-app.post('/auth/token', function(req, res) {
+app.post("/auth/token", (req, res) => {
     let tid = req.body.tid;
     let token = req.body.token;
     let scopes = ["https://graph.microsoft.com/User.Read"];
@@ -121,7 +121,7 @@ app.post('/auth/token', function(req, res) {
             requested_token_use: "on_behalf_of",
             scope: scopes.join(" "),
         };
-    
+
         fetch(url, {
             method: "POST",
             body: querystring.stringify(params),
@@ -133,7 +133,7 @@ app.post('/auth/token', function(req, res) {
             if (result.status !== 200) {
             result.json().then(json => {
                 // TODO: Check explicitly for invalid_grant or interaction_required
-                reject({"error":json.error});
+                reject({"error": json.error});
             });
             } else {
             result.json().then(json => {
@@ -143,14 +143,13 @@ app.post('/auth/token', function(req, res) {
         });
     });
 
-    oboPromise.then(function(result) {
+    oboPromise.then(result => {
         res.json(result);
-    }, function(err) {
+    }, err => {
         console.log(err); // Error: "It broke"
         res.json(err);
     });
 });
-
 
 let openIdMetadata = new apis.OpenIdMetadata("https://login.microsoftonline.com/common/.well-known/openid-configuration");
 let validateIdToken = new apis.ValidateIdToken(openIdMetadata, appId).listen();     // Middleware to validate id_token
