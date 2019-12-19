@@ -126,7 +126,6 @@
                 var logDiv = document.getElementById('logs');
                 var p = document.createElement("p");
                 logDiv.prepend(msg, p);
-                console.log("Auth: " + msg);
             }
 
             function handleServerResponse(data) {
@@ -139,9 +138,6 @@
                 // Success: server returned a valid acess token
                 } else {
                     printLog("Success! You have a valid token from your backend with extra permissions.");
-                    console.log("---------")
-                    console.log(data.access_token);
-                    console.log("---------")
                     sendTokenToBot(data.access_token);
                 }
             }

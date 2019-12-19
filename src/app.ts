@@ -114,8 +114,8 @@ app.post("/auth/token", (req, res) => {
     let oboPromise = new Promise((resolve, reject) => {
         const url = "https://login.microsoftonline.com/" + tid + "/oauth2/v2.0/token";
         const params = {
-            client_id: "bdb71ee3-1c28-4edb-a758-fd6f8b60348c",
-            client_secret: "]DjvGB0f?R[Z4qSwn24uSfr?EKhGN_tv",
+            client_id: config.get("app.appId"),
+            client_secret: config.get("app.clientSecret"),
             grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
             assertion: token,
             requested_token_use: "on_behalf_of",
