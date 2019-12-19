@@ -186,7 +186,7 @@ export abstract class BaseIdentityDialog extends builder.IntentDialog
             let signinUrl = config.get("app.baseUri") + `/html/auth-start.html?authorizationUrl=${encodeURIComponent(authUrl)}`;
 
             // SSO url
-            let ssoUrl = config.get("app.baseUri") + `/tab/simple`;
+            let ssoUrl = config.get("app.baseUri") + `/tab/simple?authorizationUrl=${encodeURIComponent(authUrl)}`;
 
             // The fallbackUrl specifies the page to be opened on mobile, until they support automatically passing the
             // verification code via notifySuccess(). If you want to support only this protocol, then you can give the

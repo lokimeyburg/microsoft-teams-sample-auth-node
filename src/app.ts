@@ -137,7 +137,7 @@ app.post('/auth/token', function(req, res) {
             });
             } else {
             result.json().then(json => {
-                resolve(json.access_token);
+                resolve(json);
             });
             }
         });

@@ -89,6 +89,13 @@ export class AzureADv1Provider implements IOAuth2Provider {
         };
     }
 
+    public async getUserToken(token: string): Promise<UserToken> {
+        return {
+            accessToken: token,
+            expirationTime: 3597
+        }
+    }
+
     public async getProfileAsync(accessToken: string): Promise<any> {
         let options = {
             url: graphProfileUrl,

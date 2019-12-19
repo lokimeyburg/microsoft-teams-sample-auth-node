@@ -30,6 +30,7 @@ import { Request, Response } from "express";
 import { RootDialog } from "./dialogs/RootDialog";
 import { IOAuth2Provider } from "./providers";
 import { logger } from "./utils";
+import { UserToken } from "./providers";
 
 // =========================================================
 // Auth Bot
@@ -76,7 +77,12 @@ export class AuthBot extends builder.UniversalBot {
         const stateString = req.query.state as string;
         const state = JSON.parse(stateString);
         const authCode = req.query.code;
+        const accessToken = req.query.accessToken;
         let verificationCode = "";
+
+        console.log("----------------------------")
+        console.log(req.query)
+        console.log("----------------------------")
 
         // Load the session from the address information in the OAuth state.
         // We'll later validate the state to check that it was not forged.
@@ -96,19 +102,41 @@ export class AuthBot extends builder.UniversalBot {
             logger.warn("Failed to get address from OAuth state", e);
         }
 
+        console.log("------>")
+        if ((utils.getOAuthState(session, providerName) === stateString)) {
+            console.log("They match!")
+        } else {
+            console.log("They dont match")
+        }
+        console.log("State string:");
+        console.log(stateString);
+        console.log("OAuth State: ");
+        console.log(utils.getOAuthState(session, providerName));
+        console.log("Auth Code: ");
+        console.log(authCode);
+        console.log("<------")
+
         if (session &&
             (utils.getOAuthState(session, providerName) === stateString) &&     // OAuth state matches what we expect
-            authCode) {                                                         // User granted authorization
+            (authCode || accessToken)) {                                                         // User granted authorization
             try {
-                // Redeem the authorization code for an access token, and store it provisionally
-                // The bot will refuse to use the token until we validate that the user in the chat
-                // is the same as the user who went through the authorization flow, using a verification code
-                // that needs to be presented by the user in the chat.
+                // Redeem the authorization code for an access token (if we dont have one), 
+                // and store it provisionally. The bot will refuse to use the token until we 
+                // validate that the user in the chat is the same as the user who went through 
+                // the authorization flow, using a verification code that needs to be presented 
+                // by the user in the chat.
+                if (accessToken != null) {
+                    var userToken: UserToken = {
+                        accessToken: accessToken,
+                        expirationTime: 3957,
+                        verificationCode: "asdasd"
+                    }
+                } else {
+                    let userToken = await provider.getAccessTokenAsync(authCode);
+                    await utils.prepareTokenForVerification(userToken);
+                }
 
-                let userToken = await provider.getAccessTokenAsync(authCode);
-                await utils.prepareTokenForVerification(userToken);
                 utils.setUserToken(session, providerName, userToken);
-
                 verificationCode = userToken.verificationCode;
             } catch (e) {
                 logger.error("Failed to redeem code for an access token", e);

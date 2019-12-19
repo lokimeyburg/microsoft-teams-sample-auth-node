@@ -139,8 +139,43 @@
                 // Success: server returned a valid acess token
                 } else {
                     printLog("Success! You have a valid token from your backend with extra permissions.");
+                    console.log("---------")
+                    console.log(data.access_token);
+                    console.log("---------")
+                    sendTokenToBot(data.access_token);
+                }
+            }
+
+            function sendTokenToBot(accessToken) {
+                let queryParams = {};
+                let stateParams = {};
+                let redirectURI = "";
+
+                let s = location.search.substr(1).split("&")[0].split("=");
+                k = s[0];
+                v = s[1] && decodeURIComponent(s[1]);
+                queryParams[k] = v;
+
+                if (queryParams != null && queryParams.authorizationUrl != null) {
+                    queryParams.authorizationUrl.split("&").forEach(function(item) {
+                        let s = item.split("="),
+                        k = s[0],
+                        v = s[1] && decodeURIComponent(s[1]);
+                        stateParams[k] = v;
+                    });
+                    // Get the state key of the decoded authorizationUrl
+                    redirectURI = stateParams.redirect_uri;
+                    stateParams = stateParams.state;
+                    if (stateParams != null) {
+                        stateParams = JSON.parse(stateParams);
+                    }
+                } else {
+                    return;
                 }
 
+                redirectURI = redirectURI + "?accessToken=" + accessToken + "&state=" + JSON.stringify(stateParams);
+                
+                window.location.href = redirectURI;
             }
 
             // Start authentication
