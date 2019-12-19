@@ -112,7 +112,7 @@ export function validateVerificationCode(session: builder.Session, providerName:
             setUserToken(session, providerName, null);
         }
     } else {
-        console.warn("Received unexpected login callback.");
+        console.warn("Token is already valid (SSO) or you received an unexpected login callback.");
     }
 }
 

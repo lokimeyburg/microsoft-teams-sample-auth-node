@@ -80,10 +80,6 @@ export class AuthBot extends builder.UniversalBot {
         const accessToken = req.query.accessToken;
         let verificationCode = "";
 
-        console.log("----------------------------")
-        console.log(req.query)
-        console.log("----------------------------")
-
         // Load the session from the address information in the OAuth state.
         // We'll later validate the state to check that it was not forged.
         let session: builder.Session;
@@ -102,20 +98,6 @@ export class AuthBot extends builder.UniversalBot {
             logger.warn("Failed to get address from OAuth state", e);
         }
 
-        console.log("------>")
-        if ((utils.getOAuthState(session, providerName) === stateString)) {
-            console.log("They match!")
-        } else {
-            console.log("They dont match")
-        }
-        console.log("State string:");
-        console.log(stateString);
-        console.log("OAuth State: ");
-        console.log(utils.getOAuthState(session, providerName));
-        console.log("Auth Code: ");
-        console.log(authCode);
-        console.log("<------")
-
         if (session &&
             (utils.getOAuthState(session, providerName) === stateString) &&     // OAuth state matches what we expect
             (authCode || accessToken)) {                                                         // User granted authorization
@@ -129,7 +111,8 @@ export class AuthBot extends builder.UniversalBot {
                     var userToken: UserToken = {
                         accessToken: accessToken,
                         expirationTime: 3957,
-                        verificationCode: "asdasd"
+                        verificationCode: "unnecessary",
+                        verificationCodeValidated: true, //skip validation since we already got the token from AAD 
                     }
                 } else {
                     let userToken = await provider.getAccessTokenAsync(authCode);
