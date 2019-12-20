@@ -118,6 +118,7 @@
             // user click a button to show the AAD consent dialog and ask for additional permission
             function initializeConsentButton(){
                 var btn = document.getElementById("promptForConsentButton");
+                // TODO: avoid opening up a second window when consenting from a bot
                 btn.onclick = () => {
                     microsoftTeams.authentication.authenticate({
                         url: window.location.origin + "/tab/simple-start-v2",
